@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Display</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        width: 80%;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        height: 100vh;
+      }
+      .profit {
+        background-color: #d4edda;
+      }
+      .loss {
+        background-color: #f8d7da;
+      }
+      .child-table-row {
+        background-color: #e9ecef;
+      }
+
+      #dataTable {
+        min-height: 70vh;
+      }
+      #data-tbody tr td {
+        padding: 10px;
+      }
+
+      .mt-3 tbody tr,
+      .mt-3 tbody tr td {
+        vertical-align: middle;
+      }
+      .child-table-row th,
+      .child-table-row tbody tr td {
+        padding: 0.3rem !important;
+        font-size: 0.85rem;
+        line-height: 1;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        /* table-layout: fixed; */
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid #ccc;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+        max-height: fit-content;
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+
+      tbody {
+        overflow-y: auto;
+      }
+
+      thead {
+        width: 100%;
+        table-layout: fixed;
+      }
+      .pagination {
+        justify-content: center;
+      }
+      .date-filter-form {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+      .date-filter-form label,
+      .date-filter-form input,
+      .date-filter-form button {
+        margin-right: 10px;
+      }
+      #monthly-profit-loss {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Monthly Profit/Loss Display -->
+      <div id="monthly-profit-loss" class="alert alert-info">
+        Total Profit: <span id="monthly-profit-loss-amount">0.00</span>
+      </div>
+
+      <!-- Date Filter Form -->
+      <form id="date-filter-form" class="form-inline mb-3">
+        <label for="start-date" class="mr-2">Start Date:</label>
+        <input type="date" id="start-date" class="form-control mr-2" />
+        <label for="end-date" class="mr-2">End Date:</label>
+        <input type="date" id="end-date" class="form-control mr-2" />
+        <button
+          type="button"
+          class="btn btn-primary"
+          onclick="applyDateFilter()"
+        >
+          Apply Filter
+        </button>
+      </form>
+      <div id="dataTable">
+        <table class="table mt-3">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Total Spent</th>
+              <th>Total Received</th>
+              <th>Daily Profit/Loss</th>
+            </tr>
+          </thead>
+          <tbody id="data-tbody"></tbody>
+        </table>
+      </div>
+      <ul id="pagination" class="pagination"></ul>
+    </div>
+    <script>
+      let data = [];
+      let filteredData = [];
+      let currentPage = 1;
+      const rowsPerPage = 10;
+      const childRowsPerPage = 5; // Change as needed
+
+      document.addEventListener("DOMContentLoaded", () => {
+        setDefaultDates();
+        applyDateFilter(); // Fetch initial data without any filter
+      });
+      function setDefaultDates() {
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 2);
+        const currentDate = now.toISOString().split("T")[0];
+        const firstDayString = firstDayOfMonth.toISOString().split("T")[0];
+
+        document.getElementById("start-date").value = firstDayString;
+        document.getElementById("end-date").value = currentDate;
+      }
+
+      function fetchData(startDate, endDate) {
+        let url = `/data`;
+        if (startDate && endDate) {
+          url += `?start_date=${startDate}&end_date=${endDate}`;
+        }
+        fetch(url)
+          .then((response) => response.json())
+          .then((jsonData) => {
+            data = jsonData;
+            filteredData = jsonData; // Initialize filteredData
+            renderTable(filteredData, currentPage, rowsPerPage);
+            setupPagination(filteredData, rowsPerPage);
+            calculateMonthlyProfitLoss(filteredData);
+          });
+      }
+
+      function calculateMonthlyProfitLoss(data) {
+        const totalProfitLoss = data.reduce(
+          (total, row) => total + row.daily_profit_loss,
+          0
+        );
+        document.getElementById("monthly-profit-loss-amount").textContent =
+          totalProfitLoss.toFixed(2);
+      }
+
+      function renderTable(data, page, rowsPerPage) {
+        const tbody = document.getElementById("data-tbody");
+        tbody.innerHTML = "";
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const pageData = data.slice(start, end);
+
+        pageData.forEach((row) => {
+          const rowClass = row.daily_profit_loss >= 0 ? "profit" : "loss";
+          const tr = document.createElement("tr");
+          tr.classList.add(rowClass);
+          tr.dataset.date = row.date;
+          tr.innerHTML = `
+                    <td>${row.date}</td>
+                    <td>${row.total_spent}</td>
+                    <td>${row.total_received}</td>
+                    <td>${row.daily_profit_loss}</td>
+                `;
+          tr.addEventListener("click", () => toggleRowDetails(tr, row.items));
+          tbody.appendChild(tr);
+        });
+      }
+
+      function setupPagination(data, rowsPerPage) {
+        const pagination = document.getElementById("pagination");
+        pagination.innerHTML = "";
+        const pageCount = Math.ceil(data.length / rowsPerPage);
+
+        for (let i = 1; i <= pageCount; i++) {
+          const li = document.createElement("li");
+          li.classList.add("page-item");
+          li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+          li.addEventListener("click", () => {
+            currentPage = i;
+            renderTable(data, currentPage, rowsPerPage);
+          });
+          pagination.appendChild(li);
+        }
+      }
+
+      function toggleRowDetails(tr, items) {
+        const existingChildTable = tr.nextElementSibling;
+        if (
+          existingChildTable &&
+          existingChildTable.classList.contains("child-table-row")
+        ) {
+          existingChildTable.remove();
+          return;
+        }
+
+        const childTableId = `child-table-${tr.dataset.date}`;
+        const childTable = document.createElement("tr");
+        childTable.classList.add("child-table-row");
+        childTable.innerHTML = `
+                <td colspan="4">
+                    <table class="table child-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Total Spent</th>
+                                <th>Total Received</th>
+                                <th>Daily Profit/Loss</th>
+                            </tr>
+                        </thead>
+                        <tbody id="${childTableId}"></tbody>
+                    </table>
+                    <ul id="pagination-${childTableId}" class="pagination"></ul>
+                </td>
+            `;
+        tr.insertAdjacentElement("afterend", childTable);
+        renderChildTable(items, childTableId, 1);
+      }
+
+      function renderChildTable(items, tableId, page) {
+        const tbody = document.getElementById(tableId);
+        tbody.innerHTML = "";
+        const start = (page - 1) * childRowsPerPage;
+        const end = start + childRowsPerPage;
+        const pageItems = items.slice(start, end);
+
+        pageItems.forEach((item) => {
+          const itemClass = item.daily_profit_loss >= 0 ? "profit" : "loss";
+          const tr = document.createElement("tr");
+          tr.classList.add(itemClass);
+          tr.innerHTML = `
+                    <td>${item.item}</td>
+                    <td>${item.total_spent}</td>
+                    <td>${item.total_received}</td>
+                    <td>${item.daily_profit_loss}</td>
+                `;
+          tbody.appendChild(tr);
+        });
+
+        setupChildPagination(items, tableId, page);
+      }
+
+      function setupChildPagination(items, tableId, currentPage) {
+        const pagination = document.getElementById(`pagination-${tableId}`);
+        pagination.innerHTML = "";
+        const pageCount = Math.ceil(items.length / childRowsPerPage);
+
+        for (let i = 1; i <= pageCount; i++) {
+          const li = document.createElement("li");
+          li.classList.add("page-item");
+          li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+          li.addEventListener("click", (event) => {
+            event.preventDefault();
+            renderChildTable(items, tableId, i);
+          });
+          pagination.appendChild(li);
+        }
+      }
+      function applyDateFilter() {
+        const startDate = document.getElementById("start-date").value;
+        const endDate = document.getElementById("end-date").value;
+        if (startDate && endDate) {
+          currentPage = 1; // Reset to the first page
+          fetchData(startDate, endDate);
+        }
+      }
+
+      // async function keepServerAlive() {
+      //   const response = await fetch("/keep-alive", {
+      //     method: "GET",
+      //     cache: "no-cache",
+      //   });
+      //   const data = await response.json();
+      //   console.log(data);
+      // }
+
+      // document.addEventListener("DOMContentLoaded", function () {
+      //   // Set interval to send keep-alive requests every 3 seconds
+      //   setInterval(keepServerAlive, 3000);
+      // });
+    </script>
+  </body>
+</html>

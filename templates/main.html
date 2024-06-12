@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monthly Expense</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/main.css" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div id="tabButton">
+      <button class="tablink" onclick="openPage('file', this)" id="defaultOpen">
+        File Load
+      </button>
+      <button class="tablink" onclick="openPage('form', this)">
+        Data Entry
+      </button>
+      <button class="tablink" onclick="openPage('app', this)">
+        Data Display
+      </button>
+    </div>
+    <div id="file" class="tabcontent">
+      <div id="filetab">
+        <div id="notification"></div>
+        <div class="filecontainer">
+          <div id="fileform">
+            <form
+              id="file-upload-form"
+              method="post"
+              enctype="multipart/form-data"
+            >
+              <div>
+                <input
+                  type="file"
+                  name="files"
+                  id="file-input"
+                  class="file-input"
+                  multiple
+                />
+                <span id="button">Select File</span>
+              </div>
+
+              <div id="file-list" class="file-list"></div>
+            </form>
+          </div>
+          <button
+            type="submit"
+            form="file-upload-form"
+            id="fileSubmit"
+            class="submit-btn"
+          >
+            Upload Files
+          </button>
+        </div>
+        <div id="filedataContainer">
+          <div id="displayDate">
+            <form>
+              <input
+                type="date"
+                id="filepickedDate"
+                name="date"
+                required
+              /><br />
+            </form>
+          </div>
+          <div id="filedataTable"></div>
+          <div class="pagination">
+            <button id="firstPage" onclick="showFirstPageGRNData()">
+              First Page
+            </button>
+            <button id="prevButton" onclick="showPrevGRNData()">
+              Previous
+            </button>
+            <span id="currentGRNPage">Page 1</span>
+            <button id="nextButton" onclick="showNextGRNData()">Next</button>
+
+            <button id="lastPage" onclick="showLastPageGRNData()">
+              Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="form" class="tabcontent">
+      <div class="entrycontainer">
+        <form id="dataForm" method="post" action="/submit">
+          <h2>Data Entry Form</h2>
+          <label for="date">Date:</label><br />
+          <input type="date" id="date" name="date" required /><br />
+          <label for="item">Item:</label><br />
+          <select id="item" name="item" required>
+            <option value="">Select an item</option></select
+          ><br />
+          <label for="qty">Quantity:</label><br />
+          <input
+            type="number"
+            id="qty"
+            name="qty"
+            step="0.01"
+            min="0.01"
+            required
+          /><br />
+          <label for="price">Price:</label><br />
+          <input
+            type="number"
+            id="price"
+            name="price"
+            step="0.01"
+            min="0.01"
+            required
+          /><br />
+          <label for="total">Total Price:</label><br />
+          <input type="text" id="total" name="total" readonly /><br />
+          <input type="submit" value="Submit Data" />
+        </form>
+        <div id="dataContainer">
+          <div id="displayDate">
+            <form>
+              <input type="date" id="pickedDate" name="date" required /><br />
+            </form>
+          </div>
+          <div id="dataTable"></div>
+          <div class="pagination">
+            <button id="firstPage" onclick="showFirstPageData()">
+              First Page
+            </button>
+            <button id="prevButton" onclick="showPrevData()">Previous</button>
+            <span id="currentPage">Page 1</span>
+            <button id="nextButton" onclick="showNextData()">Next</button>
+
+            <button id="lastPage" onclick="fetchAndDisplayData(selectedDate)">
+              Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="notification" id="notification">
+        Data entered successfully!
+      </div>
+    </div>
+
+    <div id="app" class="tabcontent">
+      <div class="displaycontainer">
+        <div id="displayHead">
+          <form id="date-filter-form" class="form-inline mb-3">
+            <label for="start-date" class="mr-2">Start Date:</label>
+            <input type="date" id="start-date" class="form-control mr-2" />
+            <label for="end-date" class="mr-2">End Date:</label>
+            <input type="date" id="end-date" class="form-control mr-2" />
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="applyDateFilter()"
+            >
+              Apply Filter
+            </button>
+          </form>
+          <div id="monthly-profit-loss" class="alert alert-info">
+            Total Profit: <span id="monthly-profit-loss-amount">0.00</span>
+          </div>
+        </div>
+
+        <div id="dataTable">
+          <table class="table mt-3">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Total Spent</th>
+                <th>Total Received</th>
+                <th>Other Cost</th>
+                <th>Daily Profit/Loss</th>
+              </tr>
+            </thead>
+            <tbody id="data-tbody"></tbody>
+          </table>
+        </div>
+        <ul id="pagination" class="pagination"></ul>
+      </div>
+    </div>
+
+    <script src="/static/js/options.js"></script>
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/file.js"></script>
+  </body>
+</html>

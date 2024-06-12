@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Loader</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+      }
+      input[type="file"] {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+        filter: alpha(opacity=0);
+        display: inline;
+        position: absolute;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        border: 1px solid #ddd;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        height: 60vh; /* Set max height for the container */
+        overflow-y: auto; /* Enable vertical scrolling */
+      }
+      .file-input {
+        display: block;
+        margin-bottom: 20px;
+      }
+      .file-label {
+        font-size: 16px;
+        display: block;
+        margin-bottom: 5px;
+      }
+      .file-list {
+        margin-bottom: 20px;
+      }
+      .file-item {
+        margin-bottom: 5px;
+        position: relative;
+      }
+      .loading-indicator {
+        position: absolute;
+        top: 0;
+        right: -10px;
+        font-size: 16px;
+        display: none; /* Initially hide loading indicator */
+      }
+      .animate {
+        animation: spin 1s infinite linear;
+      }
+      .file-item.success {
+        color: green;
+      }
+      .file-item.error {
+        color: red;
+      }
+      .submit-btn {
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        display: block;
+        margin: 0 auto;
+      }
+      #button {
+        max-width: 15vw;
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        display: block;
+        /* margin: 0 auto; */
+      }
+      .submit-btn:hover,
+      #button:hover {
+        background-color: #45a049;
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>File Loader</h1>
+      <form id="file-upload-form" method="post" enctype="multipart/form-data">
+        <div>
+          <input
+            type="file"
+            title=" "
+            name="files"
+            id="file-input"
+            class="file-input"
+            multiple
+          />
+          <span id="button">Select File</span>
+        </div>
+
+        <div id="file-list" class="file-list"></div>
+        <button type="submit" class="submit-btn">Upload Files</button>
+      </form>
+    </div>
+
+    <script>
+      const fileInput = document.getElementById("file-input");
+      const fileListContainer = document.getElementById("file-list");
+      const button = document.getElementById("button");
+      button.addEventListener("click", function () {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener("change", function () {
+        fileListContainer.innerHTML = ""; // Clear previous file list
+
+        Array.from(fileInput.files).forEach(function (file) {
+          const fileItem = document.createElement("div");
+          fileItem.classList.add("file-item");
+
+          const fileName = document.createElement("span");
+          fileName.textContent = file.name;
+          fileItem.appendChild(fileName);
+
+          var loadingIndicator = document.createElement("span");
+          loadingIndicator.classList.add("loading-indicator");
+          loadingIndicator.classList.add("animate");
+          loadingIndicator.textContent = "⏳";
+          fileItem.appendChild(loadingIndicator);
+
+          fileListContainer.appendChild(fileItem);
+        });
+        button.style.display = "none";
+      });
+
+      document
+        .getElementById("file-upload-form")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          var files = document.getElementById("file-input").files;
+          var formData = new FormData();
+
+          for (var i = 0; i < files.length; i++) {
+            formData.append("files", files[i]);
+          }
+
+          var xhr = new XMLHttpRequest();
+          xhr.open("POST", "/FILEDATA");
+          xhr.onloadstart = function () {
+            // Show loading indicators when uploading starts
+            document
+              .querySelectorAll(".loading-indicator")
+              .forEach(function (indicator) {
+                indicator.style.display = "inline"; // Show loading indicator
+              });
+          };
+          xhr.onload = function () {
+            var response = JSON.parse(xhr.responseText);
+            updateFileStatus(response);
+          };
+          xhr.onerror = function () {
+            updateFileStatus({
+              error: "An error occurred while uploading files.",
+            });
+          };
+          xhr.send(formData);
+        });
+
+      function updateFileStatus(response) {
+        var fileListContainer = document.getElementById("file-list");
+
+        for (var i = 0; i < response.length; i++) {
+          var fileItem = fileListContainer.children[i];
+          console.log(fileItem);
+
+          if (response[i].success) {
+            fileItem.classList.add("success");
+            fileItem.querySelector(".loading-indicator").textContent = "✔️"; // Success indicator
+            fileItem
+              .querySelector(".loading-indicator")
+              .classList.remove("animate");
+          } else {
+            fileItem.classList.add("error");
+            fileItem.querySelector(".loading-indicator").textContent = "❌"; // Error indicator
+            fileItem
+              .querySelector(".loading-indicator")
+              .classList.remove("animate");
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

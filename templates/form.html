@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Entry</title>
+    <link rel="stylesheet" href="/static/css/form.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h2>Data Entry Form</h2>
+      <form id="dataForm" method="post" action="/submit">
+        <label for="date">Date:</label><br />
+        <input type="date" id="date" name="date" required /><br />
+        <label for="item">Item:</label><br />
+        <select id="item" name="item" required>
+          <option value="">Select an item</option></select
+        ><br />
+        <label for="qty">Quantity:</label><br />
+        <input
+          type="number"
+          id="qty"
+          name="qty"
+          step="0.01"
+          min="0.01"
+          required
+        /><br />
+        <label for="price">Price:</label><br />
+        <input
+          type="number"
+          id="price"
+          name="price"
+          step="0.01"
+          min="0.01"
+          required
+        /><br />
+        <label for="total">Total Price:</label><br />
+        <input type="text" id="total" name="total" readonly /><br />
+        <input type="submit" value="Submit Data" />
+      </form>
+    </div>
+    <div id="dataContainer">
+      <div id="displayDate">
+        <form>
+          <input type="date" id="pickedDate" name="date" required /><br />
+        </form>
+      </div>
+      <div id="dataTable"></div>
+      <div class="pagination">
+        <button id="firstPage" onclick="showFirstPageData()">First Page</button>
+        <button id="prevButton" onclick="showPrevData()">Previous</button>
+        <span id="currentPage">Page 1</span>
+        <button id="nextButton" onclick="showNextData()">Next</button>
+
+        <button id="lastPage" onclick="fetchAndDisplayData(selectedDate)">
+          Refresh
+        </button>
+      </div>
+    </div>
+    <div class="notification" id="notification">Data entered successfully!</div>
+    <script src="/static/js/options.js"></script>
+    <script src="/static/js/form.js"></script>
+  </body>
+</html>
